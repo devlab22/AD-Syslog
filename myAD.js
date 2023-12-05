@@ -1,4 +1,4 @@
-const AD = require('activedirectory');
+const ActiveDirectory = require('activedirectory');
 
 class MyAD {
     constructor(username, password, ADServer, BaseDN) {
@@ -25,7 +25,7 @@ class MyAD {
     async authenticate() {
 
         const config = this.getConfig();
-        const ad = new AD(config);
+        const ad = new ActiveDirectory(config);
 
         let myPromise = new Promise((resolve, reject) => {
             ad.authenticate(this.username, this.password, function (err, auth) {
@@ -37,38 +37,38 @@ class MyAD {
                 }
 
                 if (auth) {
-                    resolve('Authenticated!');
+                    resolve(true);
                 } else {
-                    reject('No Authenticated')
+                    reject(false)
                 }
             });
 
 
         });
 
-        const auth = await myPromise.then((response) => {
-            return true;
-        }).catch(err => {
-            console.log('error in promise', JSON.stringify(err))
-            return false;
-        })
+        const value = await myPromise.then(
+            function(response) {
+                return response;
+            },
+            function(err) {
+                console.log('error in promise authenticate', JSON.stringify(err))
+                return false;
+            }
+        )
 
-        return auth;
+        return value;
     }
 
-    async readAttribute(attribute) {
+    async readAttribute(name) {
 
         const config = this.getConfig();
-       
-        config.attributes.user.push(attribute)
+        config.attributes.user.push(name)
+        
+        const ad = new ActiveDirectory(config);
 
-        const ad = new AD(config);
-        const query = `cn=${this.username}`
-
-        let myPromise = new Promise((resolve, reject) => {
-            ad.findUser(query, function (err, user) {
-
-                console.log('find user', user)
+        console.log(config)
+        let myPromise = new Promise(function(resolve, reject) {
+            ad.findUser(this.username, function (err, user) {
 
                 if (err) {
                     console.log('ERROR: ' + JSON.stringify(err));
@@ -77,36 +77,40 @@ class MyAD {
                 }
 
                 if (user) {
+                    console.log('resolve')
                     resolve(user);
                 } else {
-                    reject(`User ${query} is not found`)
+                    console.log('reject')
+                    reject(`No Attribute ${name}`)
                 }
             });
 
 
         });
 
-        const value = await myPromise.then((response) => {
-            return response;
-        }).catch(err => {
-            console.log('error in promise', JSON.stringify(err))
-            return null;
-        })
+        const value = await myPromise.then(
+            function(response) {
+                return response[name] || '';
+            },
+            function(err) {
+                console.log('error in promise read attribute', JSON.stringify(err))
+                return null;
+            }
+        )
 
         return value;
 
     }
 
-    async readAdGroups() {
+    async readADGroups() {
 
         const config = this.getConfig();
         config.attributes.group.push('cn')
 
-        const ad = new AD(config);
-        const query = `cn=${this.username}`
-        
-        let myPromise = new Promise((resolve, reject) => {
-            ad.getGroupMembershipForUser(query, function (err, groups) {
+        const ad = new ActiveDirectory(config);
+
+        let myPromise = new Promise(function(resolve, reject) {
+            ad.getGroupMembershipForUser(this.username, function (err, groups) {
 
                 if (err) {
                     console.log('ERROR: ' + JSON.stringify(err));
@@ -124,14 +128,22 @@ class MyAD {
 
         });
 
-        const groups = await myPromise.then((response) => {
-            return response;
-        }).catch(err => {
-            console.log('error in promise', JSON.stringify(err))
-            return [];
-        })
+        const value = await myPromise.then(
+            function(response) {
+                const result = []
+                if (Array.isArray(response)) {
+                    response.forEach(element => result.push(element.cn))
+                }
+                return result;
+            },
+            function(err) {
+                console.log('error in promise read groups', JSON.stringify(err))
+                return [];
+            }
+        )
 
-        return groups;
+        return value;
+
     }
 }
 

@@ -1,7 +1,10 @@
 const syslog = require('syslog-client');
 
 class MySyslog{
-
+    
+    static Severety = syslog.Severity
+    static Facility = syslog.Facility
+    
     constructor(host, port=514){
 
         this.logger = syslog.createClient(host, {
@@ -11,8 +14,8 @@ class MySyslog{
         });
     }
 
-    sendLogg(message = 'info') {
-        this.logger.log(message);
+    sendLogg(message = 'info', options={}) {
+        this.logger.log(message, options);
     }
 }
 

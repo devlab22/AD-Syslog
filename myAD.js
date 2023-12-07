@@ -26,9 +26,10 @@ class MyAD {
 
         const config = this.getConfig();
         const ad = new ActiveDirectory(config);
+        const query = `${this.username}`
 
         let myPromise = new Promise((resolve, reject) => {
-            ad.authenticate(this.username, this.password, function (err, auth) {
+            ad.authenticate(query, this.password, function (err, auth) {
 
                 if (err) {
                     console.log('ERROR: ' + JSON.stringify(err));
@@ -52,10 +53,13 @@ class MyAD {
             },
             function(err) {
                 console.log('error in promise authenticate', JSON.stringify(err))
-                return false;
+                throw new Error(err.toString())
             }
         )
 
+        if(!value){
+            throw new Error('authenticate failed')
+        }
         return value;
     }
 

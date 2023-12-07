@@ -6,6 +6,7 @@ const helmet = require("helmet");
 const cookieparser = require("cookie-parser");
 const cors = require('cors');
 const bodyParser = require('body-parser');
+const MyLDAP = require('./myLDAP')
 //const fs = require('fs');
 //const dirname = process.cwd();
 
@@ -32,7 +33,7 @@ app.use(cors(corsOptions))
 
 const PORT = 8080;
 const HOST = 'localhost'
-const pathAD = '192.168.143.245'
+const pathAD = '192.168.143.213'
 const baseDN = 'DC=netsecurelab,DC=net'
 
 app.get("/", (req, res) => {
@@ -41,30 +42,42 @@ app.get("/", (req, res) => {
 
 app.get("/ad", (req, res) => {
 
+    const name = req.query.name || 'wWWHomePage'
+    const username = req.query.username || null
+    const password = req.query.password || null
+
     const result = {
        // body: req.body,
        // query: req.query,
        // params: req.params,
-        root: "AD",
+        root: "",
+        user: username,
         auth: false,
         attribute: {},
-        groups: []
+        groups: [],
+        message: ''
     }
 
-    const name = req.query.name || 'wWWHomePage'
-    const username = req.query.username || null
-    const password = req.query.password || null
+    result.attribute[name] = null
 
     try {
         (async () => {
 
             try {
-
+                var response = {}
                 if (username && password) {
-                    const response = await createConnection(username, password, name, true)
+                    /* result.root = 'AD'
+                    response = await createConnection(username, password, name, true)                   
                     result.auth = response.auth
+                    result.message = response.message
                     result.attribute[response.attribute.name] = response.attribute.value
-                    result.groups = response.groups
+                    result.groups = response.groups */
+
+                    result.root = 'LDAP'
+                    response = await createLDAPConnection(username, password, name, true)                   
+                    result.auth = response.auth
+                    result.message = response.message
+                    
                     
                 }
 
@@ -108,12 +121,11 @@ const createConnection = async (username, password, name = null, groups = false)
     }
     const ad = new myAD(username, password, pathAD, baseDN)
 
-    const auth = await ad.authenticate()
-
-    if (!auth) {
+    response.auth = await ad.authenticate()
+    
+    if (!response.auth) {
         console.log("authenticate faild")
         response.message = "authenticate faild"
-        response.auth = false
         return response
     }
     console.log("authenticate success")
@@ -133,6 +145,24 @@ const createConnection = async (username, password, name = null, groups = false)
 
     return response
 }
+
+ async function createLDAPConnection(username, password, name=null, groups=false){
+
+    const response = {
+          auth: false,
+          message: ''
+    }
+    const ldap = new MyLDAP(username, password, pathAD, baseDN);
+
+   // await ldap.readAttribute('mail')
+    response.auth = await ldap.authenticate()
+    
+    if(!response.auth){
+        response.message = 'authenticate failed'
+        return response
+    }
+}
+
 
 
 

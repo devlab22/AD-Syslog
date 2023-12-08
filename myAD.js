@@ -4,7 +4,7 @@ class MyAD {
     constructor(username, password, ADServer, BaseDN) {
         this.username = username;
         this.password = password;
-        this.ADServer = `ldap://${ADServer}`;
+        this.ADServer = ADServer;
         this.BaseDN = BaseDN;
     }
 
@@ -26,10 +26,9 @@ class MyAD {
 
         const config = this.getConfig();
         const ad = new ActiveDirectory(config);
-        const query = `${this.username}`
 
         let myPromise = new Promise((resolve, reject) => {
-            ad.authenticate(query, this.password, function (err, auth) {
+            ad.authenticate(this.username, this.password, function (err, auth) {
 
                 if (err) {
                     console.log('ERROR: ' + JSON.stringify(err));
@@ -48,18 +47,11 @@ class MyAD {
         });
 
         const value = await myPromise.then(
-            function(response) {
-                return response;
-            },
-            function(err) {
-                console.log('error in promise authenticate', JSON.stringify(err))
-                throw new Error(err.toString())
+            function(response){
+            return response;
             }
         )
 
-        if(!value){
-            throw new Error('authenticate failed')
-        }
         return value;
     }
 
@@ -67,14 +59,11 @@ class MyAD {
 
         const config = this.getConfig();
         config.attributes.user.push(name)
-        
-        const ad = new ActiveDirectory(config);
-        var query = `${this.username}`
 
-        console.log(config)
-        
-        let myPromise = new Promise(function(resolve, reject) {
-            ad.findUser(query, (err, user) => {
+        const ad = new ActiveDirectory(config);
+
+        let myPromise = new Promise((resolve, reject) => {
+            ad.findUser(this.username, function (err, user) {
 
                 if (err) {
                     console.log('ERROR: ' + JSON.stringify(err));
@@ -83,10 +72,8 @@ class MyAD {
                 }
 
                 if (user) {
-                    console.log('resolve')
                     resolve(user);
                 } else {
-                    console.log('reject')
                     reject(`No Attribute ${name}`)
                 }
             });
@@ -95,13 +82,14 @@ class MyAD {
         });
 
         const value = await myPromise.then(
-            (response) => {
-                return response[name] || '';
-            }/* ,
-            (err) => {
-                console.log('error in promise read attribute', JSON.stringify(err))
-                return null;
-            } */
+            function(response){
+                
+            return response[name] || '';
+            },
+            function(err){
+                console.log('error in promise', JSON.stringify(err))
+            return null;
+            }
         )
 
         return value;
@@ -115,7 +103,7 @@ class MyAD {
 
         const ad = new ActiveDirectory(config);
 
-        let myPromise = new Promise(function(resolve, reject) {
+        let myPromise = new Promise((resolve, reject) => {
             ad.getGroupMembershipForUser(this.username, function (err, groups) {
 
                 if (err) {
@@ -135,21 +123,21 @@ class MyAD {
         });
 
         const value = await myPromise.then(
-            function(response) {
+            function(response){
                 const result = []
-                if (Array.isArray(response)) {
-                    response.forEach(element => result.push(element.cn))
-                }
-                return result;
+            if (Array.isArray(response)) {
+                response.forEach(element => result.push(element.cn))
+            }
+            return result;
             },
-            function(err) {
-                console.log('error in promise read groups', JSON.stringify(err))
-                return [];
+            function(err){
+                console.log('error in promise', JSON.stringify(err))
+            return [];
             }
         )
 
         return value;
-
+        
     }
 }
 

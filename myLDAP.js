@@ -4,7 +4,7 @@ class MyLDAP {
     constructor(username, password, adServer, baseDN) {
         this.username = username
         this.password = password
-        this.adServer = `ldap://${adServer}`
+        this.adServer = adServer
         this.baseDN = baseDN
     }
 

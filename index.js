@@ -32,10 +32,10 @@ var corsOptions = {
 
 app.use(cors(corsOptions))
 
-const PORT = 8080;
+const PORT = 5000;
 const HOST = 'localhost'
-var pathAD = '192.168.143.213'
-pathAD = '192.168.178.94'
+var pathAD = 'ldap://192.168.143.213'
+pathAD = 'ldap://192.168.178.94'
 const baseDN = 'DC=netsecurelab,DC=net'
 
 app.get("/", (req, res) => {
@@ -68,17 +68,18 @@ app.get("/ad", (req, res) => {
             try {
                 var response = {}
                 if (username && password) {
-                   /*  result.root = 'AD'
+                    
+                    result.root = 'AD'
                     response = await createConnection(username, password, name, true)                   
                     result.auth = response.auth
                     result.message = response.message
                     result.attribute[response.attribute.name] = response.attribute.value
-                    result.groups = response.groups */
+                    result.groups = response.groups
 
-                    result.root = 'LDAP'
+                    /* result.root = 'LDAP'
                     response = await createLDAPConnection(username, password, name, true)                   
                     result.auth = response.auth
-                    result.message = response.message
+                    result.message = response.message */
 
                    /*  result.root = 'DB'
 
@@ -86,7 +87,7 @@ app.get("/ad", (req, res) => {
                     result.auth = await db.authenticateAD()
                     const value = await db.readAttributeAD(name) */
                     
-                    
+                   
                     
                 }
 
@@ -146,12 +147,12 @@ const createConnection = async (username, password, name = null, groups = false)
     logger.sendLogg(`${username} ${response.message}`)
     console.log(response.message)
 
-    if (name) {
+    /* if (name) {
         const value = await ad.readAttribute(name)
         console.log(name, '=>', value)
         response.attribute.name = name
         response.attribute.value = value
-    }
+    } */
 
     if (groups) {
         const adGroups = await ad.readADGroups()

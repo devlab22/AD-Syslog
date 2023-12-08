@@ -47,21 +47,22 @@ class MyAD {
         });
 
         const value = await myPromise.then(
-            function(response){
-            return response;
+            function (response) {
+                return response;
             }
         )
 
         return value;
     }
 
-    async readAttribute(name) {
+    async readAttribute(names=[]) {
 
         const config = this.getConfig();
-        config.attributes.user.push(name)
+        
+        names.forEach(name => config.attributes.user.push(name))
 
         const ad = new ActiveDirectory(config);
-
+        
         let myPromise = new Promise((resolve, reject) => {
             ad.findUser(this.username, function (err, user) {
 
@@ -82,13 +83,8 @@ class MyAD {
         });
 
         const value = await myPromise.then(
-            function(response){
-                
-            return response[name] || '';
-            },
-            function(err){
-                console.log('error in promise', JSON.stringify(err))
-            return null;
+            function (response) {
+                return response;
             }
         )
 
@@ -123,21 +119,21 @@ class MyAD {
         });
 
         const value = await myPromise.then(
-            function(response){
+            function (response) {
                 const result = []
-            if (Array.isArray(response)) {
-                response.forEach(element => result.push(element.cn))
-            }
-            return result;
+                if (Array.isArray(response)) {
+                    response.forEach(element => result.push(element.cn))
+                }
+                return result;
             },
-            function(err){
+            function (err) {
                 console.log('error in promise', JSON.stringify(err))
-            return [];
+                return [];
             }
         )
 
         return value;
-        
+
     }
 }
 

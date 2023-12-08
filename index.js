@@ -7,7 +7,6 @@ const cookieparser = require("cookie-parser");
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const MyLDAP = require('./myLDAP')
-const MyDashboartAD = require('./myDasboardAD')
 //const fs = require('fs');
 //const dirname = process.cwd();
 
@@ -44,23 +43,25 @@ app.get("/", (req, res) => {
 
 app.get("/ad", (req, res) => {
 
-    const name = req.query.name || 'wWWHomePage'
     const username = req.query.username || null
     const password = req.query.password || null
+    
 
     const result = {
-       // body: req.body,
-       // query: req.query,
-       // params: req.params,
+        // body: req.body,
+        // query: req.query,
+        // params: req.params,
         root: "",
         user: username,
         auth: false,
-        attribute: {},
+        attributes: {},
         groups: [],
         message: ''
     }
 
-    result.attribute[name] = null
+    const attributes = []
+    attributes.push('wWWHomePage')
+    attributes.push('mail')
 
     try {
         (async () => {
@@ -68,27 +69,24 @@ app.get("/ad", (req, res) => {
             try {
                 var response = {}
                 if (username && password) {
-                    
-                    result.root = 'AD'
-                    response = await createConnection(username, password, name, true)                   
+
+                    /* result.root = 'AD'
+                    response = await createConnection(username, password, attributes, true)
                     result.auth = response.auth
                     result.message = response.message
-                    result.attribute[response.attribute.name] = response.attribute.value
-                    result.groups = response.groups
+                    result.attributes = response.attribute
+                    result.groups = response.groups */
 
-                    /* result.root = 'LDAP'
-                    response = await createLDAPConnection(username, password, name, true)                   
+                    result.root = 'LDAP'
+                    response = await createLDAPConnection(username, password, attributes, true)                   
                     result.auth = response.auth
-                    result.message = response.message */
+                    result.message = response.message
+                    result.attributes = response.attributes
 
-                   /*  result.root = 'DB'
+                    
 
-                    const db = new MyDashboartAD(username, password, pathAD, baseDN)
-                    result.auth = await db.authenticateAD()
-                    const value = await db.readAttributeAD(name) */
-                    
-                   
-                    
+
+
                 }
 
                 res.json(result)
@@ -123,36 +121,35 @@ const sendLogg = () => {
     myLog.sendLogg('hallo world')
 }
 
-const createConnection = async (username, password, name = null, groups = false) => {
+const createConnection = async (username, password, attributes=[], groups = false) => {
 
     const response = {
         auth: false,
         groups: [],
         message: '',
-        attribute: { name: '', value: ''}
+        attribute: { name: '', value: '' },
+        attributes: []
     }
     const ad = new myAD(username, password, pathAD, baseDN)
     const logger = new mySyslog(pathAD, 514)
 
     response.auth = await ad.authenticate()
-    
+
     if (!response.auth) {
         response.message = "authenticate faild"
-        console.log(response.message)        
+        console.log(response.message)
         logger.sendLogg(`${username} ${response.message}`)
         return response
     }
-    
+
     response.message = "authenticate success"
     logger.sendLogg(`${username} ${response.message}`)
     console.log(response.message)
 
-    /* if (name) {
-        const value = await ad.readAttribute(name)
-        console.log(name, '=>', value)
-        response.attribute.name = name
-        response.attribute.value = value
-    } */
+    if (attributes.length > 0) {
+        const value = await ad.readAttribute(attributes)
+        response.attribute = value
+    }
 
     if (groups) {
         const adGroups = await ad.readADGroups()
@@ -163,21 +160,26 @@ const createConnection = async (username, password, name = null, groups = false)
     return response
 }
 
- async function createLDAPConnection(username, password, name=null, groups=false){
+async function createLDAPConnection(username, password, attributes = [], groups = false) {
 
     const response = {
-          auth: false,
-          message: ''
+        auth: false,
+        attributes: {},
+        message: 'authenticate failed'
     }
     const ldap = new MyLDAP(username, password, pathAD, baseDN);
 
-   // await ldap.readAttribute('mail')
     response.auth = await ldap.authenticate()
-    
-    if(!response.auth){
-        response.message = 'authenticate failed'
+
+    if (!response.auth) {
         return response
     }
+
+    response.message = 'authenticate success'
+    const values = await ldap.readAttribute(attributes)
+    response.attributes = values
+
+    return response
 }
 
 

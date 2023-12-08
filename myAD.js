@@ -69,10 +69,12 @@ class MyAD {
         config.attributes.user.push(name)
         
         const ad = new ActiveDirectory(config);
+        var query = `${this.username}`
 
         console.log(config)
+        
         let myPromise = new Promise(function(resolve, reject) {
-            ad.findUser(this.username, function (err, user) {
+            ad.findUser(query, (err, user) => {
 
                 if (err) {
                     console.log('ERROR: ' + JSON.stringify(err));
@@ -93,13 +95,13 @@ class MyAD {
         });
 
         const value = await myPromise.then(
-            function(response) {
+            (response) => {
                 return response[name] || '';
-            },
-            function(err) {
+            }/* ,
+            (err) => {
                 console.log('error in promise read attribute', JSON.stringify(err))
                 return null;
-            }
+            } */
         )
 
         return value;

@@ -18,8 +18,10 @@ class MyLDAP {
             console.log('Error in connect =>', JSON.stringify(err))
         })
 
+        const query = `cn=${this.username},ou=people,${this.baseDN}`
+        console.log(query)
         const myPromise = new Promise((resolve, reject) => {
-            const query = `${this.baseDN}`
+
             client.bind(query, this.password, (err) => {
 
                 if (err) {
@@ -68,6 +70,8 @@ class MyLDAP {
         client.on('connectError', (err) => {
             console.log('Error in connect =>', JSON.stringify(err))
         })
+
+       
 
         const opts = {
             filter: `(cn=${this.username})`,

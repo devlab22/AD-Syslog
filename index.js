@@ -7,6 +7,7 @@ const cookieparser = require("cookie-parser");
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const MyLDAP = require('./myLDAP')
+const MyDashboartAD = require('./myDasboardAD')
 //const fs = require('fs');
 //const dirname = process.cwd();
 
@@ -33,7 +34,8 @@ app.use(cors(corsOptions))
 
 const PORT = 8080;
 const HOST = 'localhost'
-const pathAD = '192.168.143.213'
+var pathAD = '192.168.143.213'
+pathAD = '192.168.178.94'
 const baseDN = 'DC=netsecurelab,DC=net'
 
 app.get("/", (req, res) => {
@@ -66,7 +68,7 @@ app.get("/ad", (req, res) => {
             try {
                 var response = {}
                 if (username && password) {
-                    /* result.root = 'AD'
+                   /*  result.root = 'AD'
                     response = await createConnection(username, password, name, true)                   
                     result.auth = response.auth
                     result.message = response.message
@@ -77,6 +79,13 @@ app.get("/ad", (req, res) => {
                     response = await createLDAPConnection(username, password, name, true)                   
                     result.auth = response.auth
                     result.message = response.message
+
+                   /*  result.root = 'DB'
+
+                    const db = new MyDashboartAD(username, password, pathAD, baseDN)
+                    result.auth = await db.authenticateAD()
+                    const value = await db.readAttributeAD(name) */
+                    
                     
                     
                 }
@@ -84,6 +93,7 @@ app.get("/ad", (req, res) => {
                 res.json(result)
             }
             catch (err) {
+                console.log('ERROR =>', err.message)
                 result.code = 401;
                 result.message = err.message;
                 res.json(result);
@@ -93,6 +103,7 @@ app.get("/ad", (req, res) => {
 
     }
     catch (err) {
+        console.log('base error', err)
         result.code = 403;
         result.message = err.message;
         res.json(result);
@@ -120,15 +131,20 @@ const createConnection = async (username, password, name = null, groups = false)
         attribute: { name: '', value: ''}
     }
     const ad = new myAD(username, password, pathAD, baseDN)
+    const logger = new mySyslog(pathAD, 514)
 
     response.auth = await ad.authenticate()
     
     if (!response.auth) {
-        console.log("authenticate faild")
         response.message = "authenticate faild"
+        console.log(response.message)        
+        logger.sendLogg(`${username} ${response.message}`)
         return response
     }
-    console.log("authenticate success")
+    
+    response.message = "authenticate success"
+    logger.sendLogg(`${username} ${response.message}`)
+    console.log(response.message)
 
     if (name) {
         const value = await ad.readAttribute(name)

@@ -12,11 +12,10 @@ class MyLDAP {
 
         const client = ldap.createClient({
             url: this.adServer
-        });
-
-        client.on('connectError', (err) => {
-            console.log('Error in connect =>', JSON.stringify(err))
         })
+            .on('connectError', (err) => {
+                console.log('Error in connect =>', JSON.stringify(err))
+            })
 
         const myPromise = new Promise((resolve, reject) => {
             client.bind(this.username, this.password, (err) => {
@@ -40,7 +39,6 @@ class MyLDAP {
 
         return value;
 
-
     }
 
     async readAttribute(attributes) {
@@ -49,11 +47,10 @@ class MyLDAP {
             url: this.adServer,
             user: this.username,
             password: this.password
-        });
-
-        client.on('connectError', (err) => {
-            console.log('Error in connect =>', JSON.stringify(err))
         })
+            .on('connectError', (err) => {
+                console.log('Error in connect =>', JSON.stringify(err))
+            })
 
         const myPromise = new Promise((resolve, reject) => {
             client.bind(this.username, this.password, (err) => {
@@ -68,49 +65,46 @@ class MyLDAP {
                     const opts = {
                         filter: `(cn=${this.username})`,
                         scope: 'sub',
-                        attributes: [ ...attributes]
+                        attributes: [...attributes]
                     };
-                    
-                    var query = `DC=netsecurelab,DC=net`
-                    client.search(query, opts, (err, res) => {
-            
+
+                    client.search(this.baseDN, opts, (err, res) => {
+
                         if (err) {
                             console.log('Error in search =>', JSON.stringify(err))
                             reject(new Error(err.message))
                         }
                         else {
                             res.on('searchRequest', (searchRequest) => {
-                              //  console.log('searchRequest: ', searchRequest.messageId);
+                                //  console.log('searchRequest: ', searchRequest.messageId);
                             });
                             res.on('searchEntry', (entry) => {
-                               // console.log('entry: ' + JSON.stringify(entry.pojo));
-                               // console.log(entry.pojo)
+                                // console.log('entry: ' + JSON.stringify(entry.pojo));
+                                // console.log(entry.pojo)
                                 resolve(entry.pojo)
                             });
                             res.on('searchReference', (referral) => {
-                               // console.log('referral: ' + referral.uris.join());
+                                // console.log('referral: ' + referral.uris.join());
                             });
                             res.on('error', (err) => {
                                 console.error('error: ' + JSON.stringify(err));
                             });
                             res.on('end', (result) => {
-                               // console.log('status: ' + result.status);
+                                // console.log('status: ' + result.status);
                             });
                         }
-            
+
                     });
 
-                
+
                 }
             })
         })
 
         const value = await myPromise.then(
             (response) => {
-                //console.log(response)
                 const result = {}
                 response.attributes.forEach(element => {
-                   // console.log(element)
                     result[element.type] = element.values[0]
                 });
                 return result;
@@ -118,11 +112,96 @@ class MyLDAP {
         )
 
         return value;
-
-       
-
-       
     }
+
+    async readGroups() {
+
+        const client = ldap.createClient({
+            url: this.adServer,
+            user: this.username,
+            password: this.password
+        })
+            .on('connectError', (err) => {
+                console.log('Error in connect =>', JSON.stringify(err))
+            })
+
+        const myPromise = new Promise((resolve, reject) => {
+            client.bind(this.username, this.password, (err) => {
+
+                if (err) {
+                    //console.log(JSON.stringify(err))
+                    reject(new Error(`LDAP bind error: ${err}`));
+                }
+                else {
+                    //console.log('Authenticate Success')
+
+                    const opts = {
+                        filter: `(cn=${this.username})`,
+                        scope: 'sub',
+                        attributes: ['memberOf']
+                    };
+
+                    client.search(this.baseDN, opts, (err, res) => {
+
+                        if (err) {
+                            console.log('Error in search =>', JSON.stringify(err))
+                            reject(new Error(err.message))
+                        }
+                        else {
+                            res.on('searchRequest', (searchRequest) => {
+                                //  console.log('searchRequest: ', searchRequest.messageId);
+                            });
+                            res.on('searchEntry', (entry) => {
+                                // console.log('entry: ' + JSON.stringify(entry.pojo));
+                                // console.log(entry.pojo)
+                                resolve(entry.pojo)
+                            });
+                            res.on('searchReference', (referral) => {
+                                // console.log('referral: ' + referral.uris.join());
+                            });
+                            res.on('error', (err) => {
+                                console.error('error: ' + JSON.stringify(err));
+                            });
+                            res.on('end', (result) => {
+                                // console.log('status: ' + result.status);
+                            });
+                        }
+
+                    });
+
+
+                }
+            })
+        })
+
+        const value = await myPromise.then(
+            (response) => {
+                const result = []
+                response.attributes.forEach(element => {
+                    const tmp = this.convertMemberShip(element.values)
+                    result.push(...tmp)
+                });
+
+                return result
+            }
+        )
+
+        return value;
+
+    }
+
+    convertMemberShip(values = []) {
+
+        const result = []
+        values.forEach(value => {
+            const tmp = value.split(',')
+            result.push(tmp[0].slice(3))
+        })
+
+        return result
+    }
+
+
 
 }
 

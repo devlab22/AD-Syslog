@@ -55,11 +55,11 @@ class MyAD {
         return value;
     }
 
-    async readAttribute(names=[]) {
+    async readAttribute(attributes=[]) {
 
         const config = this.getConfig();
         
-        names.forEach(name => config.attributes.user.push(name))
+        config.attributes.user = [...attributes]
 
         const ad = new ActiveDirectory(config);
         
@@ -75,7 +75,7 @@ class MyAD {
                 if (user) {
                     resolve(user);
                 } else {
-                    reject(`No Attribute ${name}`)
+                    reject(`No Attributes`)
                 }
             });
 

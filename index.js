@@ -45,7 +45,8 @@ app.get("/ad", (req, res) => {
 
     const username = req.query.username || null
     const password = req.query.password || null
-    
+    const process = req.query.process || 'ad'
+
 
     const result = {
         // body: req.body,
@@ -70,22 +71,22 @@ app.get("/ad", (req, res) => {
                 var response = {}
                 if (username && password) {
 
-                    /* result.root = 'AD'
-                    response = await createConnection(username, password, attributes, true)
-                    result.auth = response.auth
-                    result.message = response.message
-                    result.attributes = response.attribute
-                    result.groups = response.groups */
-
-                    result.root = 'LDAP'
-                    response = await createLDAPConnection(username, password, attributes, true)                   
-                    result.auth = response.auth
-                    result.message = response.message
-                    result.attributes = response.attributes
-
-                    
-
-
+                    if (process === 'ad') {
+                        result.root = 'AD'
+                        response = await createConnection(username, password, attributes, true)
+                        result.auth = response.auth
+                        result.message = response.message
+                        result.attributes = response.attribute
+                        result.groups = response.groups
+                    }
+                    else {
+                        result.root = 'LDAP'
+                        response = await createLDAPConnection(username, password, attributes, true)
+                        result.auth = response.auth
+                        result.message = response.message
+                        result.attributes = response.attributes
+                        result.groups = response.groups
+                    }
 
                 }
 
@@ -121,7 +122,7 @@ const sendLogg = () => {
     myLog.sendLogg('hallo world')
 }
 
-const createConnection = async (username, password, attributes=[], groups = false) => {
+const createConnection = async (username, password, attributes = [], groups = false) => {
 
     const response = {
         auth: false,
@@ -136,7 +137,7 @@ const createConnection = async (username, password, attributes=[], groups = fals
     response.auth = await ad.authenticate()
 
     if (!response.auth) {
-        response.message = "authenticate faild"
+       // response.message = "authenticate faild"
         console.log(response.message)
         logger.sendLogg(`${username} ${response.message}`)
         return response
@@ -144,7 +145,7 @@ const createConnection = async (username, password, attributes=[], groups = fals
 
     response.message = "authenticate success"
     logger.sendLogg(`${username} ${response.message}`)
-    console.log(response.message)
+   // console.log(response.message)
 
     if (attributes.length > 0) {
         const value = await ad.readAttribute(attributes)
@@ -153,7 +154,6 @@ const createConnection = async (username, password, attributes=[], groups = fals
 
     if (groups) {
         const adGroups = await ad.readADGroups()
-        console.log(adGroups)
         response.groups = adGroups
     }
 
@@ -178,6 +178,11 @@ async function createLDAPConnection(username, password, attributes = [], groups 
     response.message = 'authenticate success'
     const values = await ldap.readAttribute(attributes)
     response.attributes = values
+
+    if(groups){
+        const adGroups = await ldap.readGroups()
+        response.groups = adGroups
+    }
 
     return response
 }

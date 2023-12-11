@@ -10,9 +10,6 @@ const MyLDAP = require('./myLDAP')
 //const fs = require('fs');
 //const dirname = process.cwd();
 
-
-
-
 const app = express()
 
 app.use(helmet());
@@ -34,7 +31,7 @@ app.use(cors(corsOptions))
 const PORT = 5000;
 const HOST = 'localhost'
 var pathAD = 'ldap://192.168.143.213'
-pathAD = 'ldap://192.168.178.94'
+pathAD = 'ldap://192.168.178.95'
 const baseDN = 'DC=netsecurelab,DC=net'
 
 app.get("/", (req, res) => {
@@ -45,7 +42,7 @@ app.get("/ad", (req, res) => {
 
     const username = req.query.username || null
     const password = req.query.password || null
-    const process = req.query.process || 'ad'
+    const process = req.query.process || 'ldap'
 
 
     const result = {
@@ -57,7 +54,8 @@ app.get("/ad", (req, res) => {
         auth: false,
         attributes: {},
         groups: [],
-        message: ''
+        message: '',
+        status: 200
     }
 
     const attributes = []
@@ -94,7 +92,7 @@ app.get("/ad", (req, res) => {
             }
             catch (err) {
                 console.log('ERROR =>', err.message)
-                result.code = 401;
+                result.status = 401;
                 result.message = err.message;
                 res.json(result);
             }
@@ -104,7 +102,7 @@ app.get("/ad", (req, res) => {
     }
     catch (err) {
         console.log('base error', err)
-        result.code = 403;
+        result.status = 403;
         result.message = err.message;
         res.json(result);
     }
@@ -124,6 +122,7 @@ const sendLogg = () => {
 
 const createConnection = async (username, password, attributes = [], groups = false) => {
 
+    console.log('create connection AD')
     const response = {
         auth: false,
         groups: [],
@@ -162,6 +161,7 @@ const createConnection = async (username, password, attributes = [], groups = fa
 
 async function createLDAPConnection(username, password, attributes = [], groups = false) {
 
+    console.log('create connection LDAP')
     const response = {
         auth: false,
         attributes: {},
@@ -176,12 +176,12 @@ async function createLDAPConnection(username, password, attributes = [], groups 
     }
 
     response.message = 'authenticate success'
-    const values = await ldap.readAttribute(attributes)
-    response.attributes = values
+    if(attributes.length > 0){
+        response.attributes = await ldap.readAttribute(attributes)
+    }
 
     if(groups){
-        const adGroups = await ldap.readGroups()
-        response.groups = adGroups
+        response.groups = await ldap.readGroups()
     }
 
     return response

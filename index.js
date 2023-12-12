@@ -30,8 +30,9 @@ app.use(cors(corsOptions))
 
 const PORT = 5000;
 const HOST = 'localhost'
-var pathAD = 'ldap://192.168.143.213'
-pathAD = 'ldap://192.168.178.95'
+var pathAD = 'ldaps://192.168.143.213'
+//pathAD = 'ldap://192.168.178.95'
+pathAD = 'ldap://192.168.143.245'
 const baseDN = 'DC=netsecurelab,DC=net'
 
 app.get("/", (req, res) => {
@@ -174,8 +175,8 @@ async function createLDAPConnection(username, password, attributes = [], groups 
     if (!response.auth) {
         return response
     }
-
     response.message = 'authenticate success'
+    
     if(attributes.length > 0){
         response.attributes = await ldap.readAttribute(attributes)
     }

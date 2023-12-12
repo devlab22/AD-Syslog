@@ -45,9 +45,7 @@ class MyLDAP {
     async readAttribute(attributes) {
 
         const client = ldap.createClient({
-            url: this.adServer,
-            user: this.username,
-            password: this.password
+            url: this.adServer
         })
             .on('connectError', (err) => {
                 console.log('Error in connect =>', JSON.stringify(err))
@@ -106,9 +104,7 @@ class MyLDAP {
     async readGroups() {
 
         const client = ldap.createClient({
-            url: this.adServer,
-            user: this.username,
-            password: this.password
+            url: this.adServer
         })
             .on('connectError', (err) => {
                 console.log('Error in connect =>', JSON.stringify(err))
@@ -182,9 +178,7 @@ class MyLDAP {
     async readAllAttributes() {
 
         const client = ldap.createClient({
-            url: this.adServer,
-            user: this.username,
-            password: this.password
+            url: this.adServer
         })
             .on('connectError', (err) => {
                 console.log('Error in connect =>', JSON.stringify(err))
